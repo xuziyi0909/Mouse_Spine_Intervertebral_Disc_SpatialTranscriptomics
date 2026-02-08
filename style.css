@@ -1,0 +1,102 @@
+/* Custom styles for the bookdown website */
+
+body {
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  line-height: 1.6;
+  color: #333;
+}
+
+.book .book-header h1 {
+  color: #2c3e50;
+  font-weight: 300;
+}
+
+.book .book-summary {
+  background: #f8f9fa;
+}
+
+.book .book-summary ul.summary li a {
+  color: #495057;
+  font-weight: 500;
+}
+
+.book .book-summary ul.summary li a:hover {
+  color: #007bff;
+  background: #e9ecef;
+}
+
+.book .book-body .page-wrapper .page-inner {
+  max-width: 1200px;
+}
+
+.book .book-body .page-wrapper .page-inner section.normal h1 {
+  color: #2c3e50;
+  border-bottom: 2px solid #3498db;
+  padding-bottom: 10px;
+}
+
+.book .book-body .page-wrapper .page-inner section.normal h2 {
+  color: #34495e;
+  border-left: 4px solid #3498db;
+  padding-left: 15px;
+}
+
+.book .book-body .page-wrapper .page-inner section.normal h3 {
+  color: #7f8c8d;
+}
+
+/* Code blocks */
+.book .book-body .page-wrapper .page-inner section.normal pre {
+  background: #f8f9fa;
+  border: 1px solid #e9ecef;
+  border-radius: 5px;
+}
+
+/* Figures */
+.book .book-body .page-wrapper .page-inner section.normal img {
+  border: 1px solid #dee2e6;
+  border-radius: 5px;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+/* Tables */
+.book .book-body .page-wrapper .page-inner section.normal table {
+  border-collapse: collapse;
+  width: 100%;
+  margin: 20px 0;
+}
+
+.book .book-body .page-wrapper .page-inner section.normal table th {
+  background: #3498db;
+  color: white;
+  padding: 12px;
+  text-align: left;
+}
+
+.book .book-body .page-wrapper .page-inner section.normal table td {
+  padding: 10px;
+  border-bottom: 1px solid #dee2e6;
+}
+
+/* Navigation */
+.book .book-header .btn {
+  color: #495057;
+}
+
+.book .book-header .btn:hover {
+  color: #007bff;
+}
+
+/* Search box */
+.book .book-header .search-input {
+  border: 1px solid #ced4da;
+  border-radius: 20px;
+}
+
+/* Responsive design */
+@media (max-width: 768px) {
+  .book .book-body .page-wrapper .page-inner {
+    max-width: 100%;
+    padding: 10px;
+  }
+} 

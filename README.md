@@ -22,8 +22,6 @@ Analysis Report
   - [Spatial Visualization](#spatial-visualization)
 - [Refined Differential Expression (Handling Sampling
   Bias)](#refined-differential-expression-handling-sampling-bias)
-  - [Strategy 1: ROI-based “In Silico”
-    Dissection](#strategy-1-roi-based-in-silico-dissection)
   - [Strategy 2: Muscle-Score
     Filtering](#strategy-2-muscle-score-filtering)
   - [Re-clustering using the muscle spots removed
@@ -175,8 +173,6 @@ cat("Control sample - Spots:", ncol(seurat_control), "Genes:", nrow(seurat_contr
 Quality control plots show the distribution of key metrics across all
 spots. This helps identify potential issues with data quality and guides
 filtering decisions.
-
-# \`\`\`{r qc_plots, echo=TRUE, fig.cap=“Quality Control Plots showing feature counts, UMI counts, and mitochondrial percentage for both samples”}
 
 ## Data Filtering
 
@@ -560,117 +556,7 @@ The initial global DE analysis may be confounded by sampling differences
 to obtain more robust biological differences specific to the IVD/Disc
 tissue.
 
-## Strategy 1: ROI-based “In Silico” Dissection
-
-We restrict the analysis to clusters identified as Disc tissue (Clusters
-0, 3, and 8) to perform an “Apple-to-Apple” comparison.
-
-``` r
-# --- STRATEGY 1: Subset to Region of Interest ---
-
-# 1. Define the clusters you trust as "IVD/Disc" (excluding Muscle/Artifact)
-target_clusters <- c("0", "3", "8")
-
-# Reset Idents to clusters just in case
-Idents(combined) <- "seurat_clusters"
-
-# Check if these clusters exist in the object
-if (all(target_clusters %in% levels(Idents(combined)))) {
-  # 2. Create a subsetted object
-  combined_roi <- subset(combined, idents = target_clusters)
-  
-  cat("ROI Subset Summary:\n")
-  print(table(combined_roi$condition)) 
-  
-  # 3. Run DE on this Clean Object
-  Idents(combined_roi) <- "condition"
-  # Ensure levels are correct for Mutant vs Control (Mutant as positive)
-  # Assuming 'Mutant' and 'Control' are the values in $condition
-  combined_roi$condition <- factor(combined_roi$condition, levels = c("Control", "Mutant"))
-  
-  de_roi <- FindMarkers(
-    combined_roi,
-    ident.1 = "Mutant",
-    ident.2 = "Control",
-    assay = "SCT",
-    test.use = "wilcox",
-    logfc.threshold = 0.25,
-    min.pct = 0.1,
-    recorrect_umi = FALSE
-  )
-  
-  # 4. Save/Visualize
-  write.csv(de_roi, "2022IVD_Strict_ROI_Mutant_vs_Control.csv")
-  cat("\nTop genes from ROI-restricted analysis:\n")
-  print(head(de_roi, 10))
-  
-  # IMPORTANT: Assign to de_df for downstream compatibility
-  de_df <- de_roi %>%
-      tibble::rownames_to_column("gene") %>%
-      mutate(
-        avg_log2FC = avg_log2FC, # Already there
-        p_val_adj = p_val_adj,   # Already there
-        significance = case_when(
-          avg_log2FC >  0.25 & p_val_adj < 0.05 ~ "Up in Mutant",
-          avg_log2FC < -0.25 & p_val_adj < 0.05 ~ "Down in Mutant",
-          TRUE                                  ~ "Not Significant"
-        )
-      )
-  
-  # Select top 20 genes to label (10 UP, 10 DOWN) based on fold change
-  top_roi_genes <- de_df %>%
-    filter(significance != "Not Significant") %>%
-    group_by(significance) %>%
-    arrange(desc(abs(avg_log2FC))) %>%
-    slice_head(n = 10) %>%
-    ungroup()
-  
-  # Optional: Volcano for ROI
-  p_roi <- ggplot(de_df, aes(x = avg_log2FC, y = -log10(p_val_adj))) +
-    geom_point(aes(color = significance), alpha = 0.6) +
-    scale_color_manual(values = c("Up in Mutant" = "firebrick", "Down in Mutant" = "steelblue", "Not Significant" = "grey70")) +
-    
-    # Add labels for top 20 genes
-    geom_text_repel(
-      data = top_roi_genes,
-      aes(label = gene),
-      size = 4,
-      box.padding = 0.5,
-      max.overlaps = Inf
-    ) +
-    
-    ggtitle("Volcano Plot: ROI (Clusters 0,3,8) Only") +
-    theme_minimal()
-  print(p_roi)
-  
-} else {
-  cat("Specified target clusters (0, 3, 8) not found in current identity levels.\n")
-  print(levels(Idents(combined)))
-}
-```
-
-    ## ROI Subset Summary:
-    ## 
-    ## Control  Mutant 
-    ##     173      68
-
-    ## 
-    ## Top genes from ROI-restricted analysis:
-    ##                p_val avg_log2FC pct.1 pct.2    p_val_adj
-    ## Ucp1    7.406906e-28  2.5950929 1.000 0.514 1.294727e-23
-    ## Acta1   1.360028e-25 -3.6468108 0.426 0.948 2.377329e-21
-    ## Fabp4   2.302146e-22  1.7571497 1.000 0.983 4.024150e-18
-    ## Tkt     4.767026e-21  1.0013905 1.000 0.988 8.332762e-17
-    ## Myh2    7.915919e-21 -4.3969957 0.088 0.798 1.383703e-16
-    ## Gpd1    2.106998e-20  2.0120962 1.000 0.572 3.683033e-16
-    ## Tmsb4x  3.099360e-20  0.7782034 1.000 1.000 5.417681e-16
-    ## Hsp90b1 7.060123e-20  0.9832259 1.000 0.983 1.234109e-15
-    ## Atp5e   1.185281e-18  0.7714362 1.000 0.994 2.071871e-14
-    ## Cox8b   1.343198e-18  1.4902120 1.000 0.902 2.347909e-14
-
-![](Web19_files/figure-gfm/unnamed-chunk-22-1.png)<!-- -->
-
-## Strategy 2: Muscle-Score Filtering
+## Strategy: Muscle-Score Filtering
 
 We remove spots with high expression of muscle-specific genes to ensure
 the comparison is specific to the disc, independent of cluster

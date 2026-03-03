@@ -10,9 +10,6 @@ Analysis Report
   - [Data Loading and Initial
     Processing](#data-loading-and-initial-processing)
   - [Quality Control Assessment](#quality-control-assessment)
-- [\`\`\`{r qc_plots, echo=TRUE, fig.cap=“Quality Control Plots showing
-  feature counts, UMI counts, and mitochondrial percentage for both
-  samples”}](#r-qc_plots-echotrue-figcapquality-control-plots-showing-feature-counts-umi-counts-and-mitochondrial-percentage-for-both-samples)
   - [Data Filtering](#data-filtering)
 - [Dimensionality Reduction and
   Clustering](#dimensionality-reduction-and-clustering)

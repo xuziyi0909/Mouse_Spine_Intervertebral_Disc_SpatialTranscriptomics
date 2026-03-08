@@ -619,8 +619,8 @@ cat("\nTop genes after removing muscle spots:\n")
 print(head(de_no_muscle))
 # Critique: While SCTransform is excellent for normalization and clustering, using assay = "SCT" for differential expression can be tricky. The values in the scale.data slot are Pearson residuals, not true expression counts, which can lead to difficulties in interpreting "Fold Change." Furthermore, if the object is merged, the SCT model might not align perfectly across samples without running PrepSCTFindMarkers.
 
-## Method 2: The Standard Spatial Approach (Recommended)
-#To obtain the most accurate Log2 Fold Changes and P-values, we return to the standard Log-Normalization workflow on the Spatial (raw counts) assay.
+## Method 2: The Standard Spatial Approach 
+#To obtain the most accurate Log Fold Changes and P-values, we return to the standard Log-Normalization workflow on the Spatial (raw counts) assay.
 
 #Critical Step for Seurat V5: In Seurat V5, merged objects store data in separate "layers" (e.g., counts.1, counts.2). If we try to run DE immediately, the function will fail because the data is fragmented. We must use JoinLayers to unify the counts into a single matrix before normalization.
 
@@ -686,43 +686,6 @@ p_clean_volcano <- ggplot(de_no_muscle, aes(x = avg_log2FC, y = -log10(p_val_adj
 
 print(p_clean_volcano)
 
-# Volcano plot
-volcano_clean <- ggplot(de_no_muscle, aes(x = avg_log2FC, y = -log10(p_val_adj))) +
-  geom_point(aes(color = significance), alpha = 0.6, size = 1.5) +
-  scale_color_manual(
-    values = c("Up in Mutant" = "firebrick", "Down in Mutant" = "steelblue", "Not Significant" = "grey70")
-  ) +
-  geom_vline(xintercept = c(-0.25, 0.25), linetype = "dashed") +
-  geom_hline(yintercept = -log10(0.05), linetype = "dashed") +
-  geom_text_repel(
-    data = de_no_muscle %>% filter(gene %in% highlight_genes),
-    aes(label = gene),
-    box.padding = 0.5,
-    max.overlaps = Inf,
-    size = 5,
-    family = "Arial"
-  ) +
-  labs(
-    x = "Log2 Fold Change (Mutant vs Control)",
-    y = "-Log10 Adjusted p-value",
-    color = ""
-  ) +
-  ggtitle("Volcano Plot: Mutant vs Control") +
-  theme_minimal(base_size = 14) +
-  theme(
-    plot.title = element_text(family = "arial", size = 14,hjust = 0.5, face = "bold"),
-    legend.position = "right",
-    legend.title = element_blank(),
-    axis.title.x = element_text(family = "arial", size = 12),
-    axis.text.y = element_text(family = "arial", size = 12),
-    panel.grid.major = element_line(color = "grey90"),
-    panel.grid.minor = element_blank(),
-    plot.margin = margin(10,10,10,10)
-  ) +
-  coord_cartesian(ylim = c(0, 85))
-
-print(volcano_clean)
-}
 ```
 
     ## Muscle Genes used: Myh2, Tnnc2, Acta1, Tnnt3, Myl1 
@@ -749,7 +712,7 @@ print(volcano_clean)
     ## Tkt    6.923228e-66  1.0152708 1.000 0.994 1.210180e-61
     ## Myh2   3.550123e-60 -3.3397310 0.167 0.753 6.205616e-56
 
-![](Web19_files/figure-gfm/unnamed-chunk-23-3.png)<!-- -->![](Web19_files/figure-gfm/unnamed-chunk-23-4.png)<!-- -->
+![](Web19_files/figure-gfm/unnamed-chunk-23-3.png)<!-- -->
 
 ## Re-clustering using the muscle spots removed data
 
@@ -997,7 +960,7 @@ Cluster_markers <- de_cluster%>%
   dplyr::filter(pct.1 > 0.5 & pct.2 < 0.1)
 
 # Generate Top 20 Marker Table for Manuscript
-# Create a clean table with: Cluster, Gene, Log2FC, Pct.In, Pct.Out, Adj.P.Val
+# Create a clean table with: Cluster, Gene, LogFC, Pct.In, Pct.Out, Adj.P.Val
 top20_markers_df <- de_cluster %>%
   dplyr::filter(avg_log2FC > 0) %>%             # Keep only upregulated genes (markers)
   dplyr::group_by(cluster) %>%
@@ -1196,7 +1159,7 @@ plot <- ggplot(df, aes(x = .data$avg_log2FC, y = .data$negLogP, color = .data$si
       geom_vline(xintercept = c(-cluster_thresholds$logfc, cluster_thresholds$logfc), linetype = "dashed") +
       geom_hline(yintercept = -log10(cluster_thresholds$padj), linetype = "dashed") +
       labs(
-        x = "Log2 Fold Change (Mutant vs Control)",
+        x = "Log Fold Change (Mutant vs Control)",
         y = "-Log10 Adjusted P-value",
         color = NULL,
         title = paste("Cluster", cluster_id)
@@ -2794,7 +2757,7 @@ This is a GSEA ridge plot. Here’s what each part means: Each Row:
 Represents a gene set made from the marker genes for that specific cell
 cluster (e.g., “Cluster 5 Nucleus pulposus progenitor cells”). The
 X-Axis (“Enrichment Distribution”): This is your ranked list of genes
-based on the log₂ Fold Change from the Mutant vs. Control comparison.
+based on the log Fold Change from the Mutant vs. Control comparison.
 Right side (\> 0): Genes are up-regulated in the Mutant. Left side (\<
 0): Genes are down-regulated in the Mutant. The Peaks (Ridges): The
 shape shows where the marker genes for that cell type are concentrated
@@ -2811,8 +2774,7 @@ significant.
 1.  **Cell Type Identification**: Identified major IVD cell types.
 
 2.  **Differential Expression**: Found significant gene expression
-    changes between mutant and control conditions, with key genes
-    including Sox9, Col10a1, Comp, Chad, and Col27a1.
+    changes between mutant and control conditions.
 
 3.  **Integration Results**: Combined analysis revealed genes that are
     both differentially expressed and spatially variable, highlighting
@@ -2823,10 +2785,7 @@ significant.
 - **Disc-Intrinsic Changes**: Analysis focused on the muscle-filtered
   dataset reveals robust differential expression specific to the IVD
   tissue.
-- **Sox9 Expression**: Key transcription factor showing differential
-  expression across conditions and cell types
-- **Extracellular Matrix Genes**: Changes in Col10a1, Comp, Chad, and
-  Col27a1 suggest alterations in matrix composition
+- **Extracellular Matrix Genes**: Changes in ECM genes suggest alterations in matrix composition
 - **Spatial Markers**: Identified genes with specific spatial patterns
   may play roles in tissue architecture
 
@@ -2838,48 +2797,3 @@ significant.
 - **Annotation**: Applied IVD-specific gene signatures for cell type
   annotation
 - **Integration**: Integrated multiple analysis approaches
-
-``` r
-# Final data export
-write.csv(combined@meta.data, "combined_metadata.csv")
-
-cat("Analysis completed successfully!\n")
-```
-
-    ## Analysis completed successfully!
-
-``` r
-cat("Output files generated:\n")
-```
-
-    ## Output files generated:
-
-``` r
-cat("- 2022IVD_NoMuscle_Mutant_vs_Control.csv\n")
-```
-
-    ## - 2022IVD_NoMuscle_Mutant_vs_Control.csv
-
-``` r
-cat("- 2022IVDonly_cluster_DE_genes.csv\n")
-```
-
-    ## - 2022IVDonly_cluster_DE_genes.csv
-
-``` r
-cat("- gsea_result_clusters.csv\n")
-```
-
-    ## - gsea_result_clusters.csv
-
-``` r
-cat("- Cluster_Marker_Volcano_Grid.png\n")
-```
-
-    ## - Cluster_Marker_Volcano_Grid.png
-
-``` r
-cat("- combined_metadata.csv\n")
-```
-
-    ## - combined_metadata.csv
